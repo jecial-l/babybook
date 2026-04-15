@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/notion", "destination": "/api/notion" },
-    { "source": "/api/verify", "destination": "/api/verify" }
-  ]
-}

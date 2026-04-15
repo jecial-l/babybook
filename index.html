@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#4A5759">
+<title>寶寶帳本</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--pink:#EDAFB8;--peach:#F7E1D7;--sand:#DEDBD2;--sage:#B0C4B1;--forest:#4A5759;--pink-lt:#F8D5DA;--peach-lt:#FBF0EB;--sand-lt:#F2F0EC;--sage-lt:#DDE9DE;--forest-lt:#D0D8D9;--forest-dk:#2E3637;--bg:#F5F3EF;--card:#fff;--text:#2E3637;--text-s:#4A5759;--text-h:#8A9B9C;--border:rgba(74,87,89,0.12);--r:16px;--r-sm:10px;--shadow:0 1px 3px rgba(74,87,89,0.07),0 3px 12px rgba(74,87,89,0.05)}
+body{font-family:-apple-system,'PingFang TC','Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:0.5px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;cursor:pointer}
+.nav-label{font-size:10px;color:var(--text-h);font-weight:500}
+.nav-item.active .nav-label{color:var(--forest)}
+.nav-item.active svg{stroke:var(--forest)!important}
+.nav-fab{width:48px;height:48px;background:var(--forest);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:-12px;box-shadow:0 4px 14px rgba(74,87,89,0.35);cursor:pointer}
+.page{display:none;padding-bottom:84px;min-height:100vh}
+.page.active{display:block}
+.hd{padding:52px 20px 12px}
+.hd-row{display:flex;justify-content:space-between;align-items:center}
+.hd-title{font-size:24px;font-weight:700}
+.hd-sub{font-size:13px;color:var(--text-h);margin-bottom:2px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--sage-lt);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.sum-card{margin:4px 16px 14px;border-radius:20px;padding:20px;background:var(--forest);color:white}
+.sum-month{font-size:12px;opacity:0.7;margin-bottom:4px}
+.sum-amt{font-size:34px;font-weight:700;margin-bottom:14px;letter-spacing:-0.5px}
+.sum-amt span{font-size:15px;font-weight:400;opacity:0.7;margin-right:2px}
+.sum-row{display:flex;gap:10px}
+.sum-s{flex:1;background:rgba(255,255,255,0.12);border-radius:12px;padding:10px 12px}
+.sum-sl{font-size:10px;opacity:0.75;margin-bottom:3px}
+.sum-sv{font-size:15px;font-weight:700}
+.bud{margin:0 16px 14px;background:var(--card);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.bud-row{display:flex;justify-content:space-between;margin-bottom:8px}
+.bud-bar{height:5px;background:var(--sand);border-radius:99px;overflow:hidden}
+.bud-fill{height:100%;background:var(--forest);border-radius:99px;transition:width 0.5s}
+.bud-note{font-size:11px;color:var(--text-h);margin-top:7px}
+.sh{display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin-bottom:10px}
+.sh-title{font-size:15px;font-weight:700}
+.sh-more{font-size:13px;color:var(--forest);cursor:pointer;font-weight:500}
+.scroll-row{display:flex;gap:8px;padding:0 16px 14px;overflow-x:auto;scrollbar-width:none}
+.scroll-row::-webkit-scrollbar{display:none}
+.acc-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:0.5px solid var(--border);border-radius:99px;padding:8px 14px;cursor:pointer;flex-shrink:0;white-space:nowrap;box-shadow:var(--shadow);transition:all 0.15s}
+.acc-chip.on{background:var(--forest);border-color:var(--forest)}
+.acc-chip.on .acc-cn{color:white}
+.acc-chip.on .acc-cb{color:rgba(255,255,255,0.7)}
+.acc-cn{font-size:13px;font-weight:600;color:var(--text)}
+.acc-cb{font-size:11px;color:var(--text-h)}
+.acc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tx-list{padding:0 16px;display:flex;flex-direction:column;gap:7px}
+.tx{background:var(--card);border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);cursor:pointer}
+.tx:active{opacity:0.8}
+.tx-iw{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--text-h);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.tx-tag{background:var(--sand-lt);color:var(--text-s);font-size:10px;padding:1px 6px;border-radius:99px;font-weight:500;flex-shrink:0}
+.tx-amt{font-size:15px;font-weight:700;color:var(--forest);flex-shrink:0}
+.tx-dh{font-size:11px;color:var(--text-h);font-weight:700;padding:8px 0 4px;letter-spacing:0.03em}
+.tx-wrap{position:relative;overflow:hidden;border-radius:var(--r-sm)}
+.tx-del-bg{position:absolute;right:0;top:0;bottom:0;width:80px;background:#E24B4A;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 var(--r-sm) var(--r-sm) 0}
+.tx-del-bg svg{stroke:white}
+.tx{transition:transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform}
+.tx.swiped{transform:translateX(-80px)}
+.del-confirm-overlay{position:fixed;inset:0;background:rgba(46,54,55,0.55);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.del-confirm-overlay.show{opacity:1;pointer-events:all}
+.del-confirm-box{background:var(--card);border-radius:var(--r);padding:24px 20px;width:88%;max-width:320px;text-align:center}
+.del-confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.del-confirm-sub{font-size:13px;color:var(--text-h);margin-bottom:20px;line-height:1.5}
+.del-confirm-btns{display:flex;gap:10px}
+.del-btn-cancel{flex:1;padding:13px;background:var(--sand-lt);color:var(--text-s);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.del-btn-ok{flex:1;padding:13px;background:#E24B4A;color:white;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.baby-avatar-wrap{position:relative;width:80px;height:80px;margin:0 auto 12px;cursor:pointer}
+.baby-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;background:var(--sage-lt);display:flex;align-items:center;justify-content:center}
+.baby-avatar-edit{position:absolute;bottom:0;right:0;width:26px;height:26px;background:var(--forest);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.setting-modal-note{font-size:12px;color:var(--text-h);margin-top:5px;line-height:1.5}
+.loading-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:32px 20px;color:var(--text-h);font-size:13px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-h);font-size:13px;line-height:1.6}
+.ch-card{margin:0 16px 12px;background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.ch-ttl{font-size:14px;font-weight:700;margin-bottom:14px}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:110px}
+.bi{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.bar{width:100%;border-radius:5px 5px 0 0}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-outer{position:relative;width:96px;height:96px;flex-shrink:0}
+.donut-outer svg{transform:rotate(-90deg)}
+.donut-ctr{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.leg{display:flex;flex-direction:column;gap:7px;flex:1}
+.leg-row{display:flex;align-items:center;gap:8px}
+.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.leg-name{font-size:12px;flex:1}
+.leg-pct{font-size:11px;color:var(--text-h)}
+.leg-amt{font-size:12px;font-weight:700;margin-left:4px}
+.acc-full-card{margin:0 16px 12px;background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.acc-full-hd{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.acc-full-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.acc-full-name{font-size:15px;font-weight:700}
+.acc-full-sub{font-size:12px;color:var(--text-h);margin-top:1px}
+.acc-stats{display:flex;gap:8px}
+.acc-stat{flex:1;background:var(--sand-lt);border-radius:10px;padding:10px 12px}
+.acc-stat-l{font-size:10px;color:var(--text-h);margin-bottom:3px}
+.acc-stat-v{font-size:16px;font-weight:700}
+.set-sec{margin:0 16px 12px;background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.set-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:0.5px solid var(--border);cursor:pointer}
+.set-item:last-child{border-bottom:none}
+.set-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.set-info{flex:1}
+.set-lbl{font-size:14px;font-weight:600}
+.set-val{font-size:11px;color:var(--text-h);margin-top:1px}
+.notion-badge{display:inline-flex;align-items:center;gap:5px;background:var(--sand-lt);padding:3px 9px;border-radius:99px;font-size:11px;color:var(--text-s);margin-top:3px}
+.nd{width:6px;height:6px;border-radius:50%;background:var(--sage)}
+.overlay{position:fixed;inset:0;background:rgba(46,54,55,0.45);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--card);border-radius:22px 22px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px));width:100%;max-height:93vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1)}
+.overlay.show .modal{transform:translateY(0)}
+.mh{width:34px;height:4px;background:var(--sand);border-radius:99px;margin:0 auto 18px}
+.mt{font-size:18px;font-weight:700;margin-bottom:18px}
+.fg{margin-bottom:14px}
+.fl{font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:5px;display:block;letter-spacing:0.04em;text-transform:uppercase}
+.fi{width:100%;padding:11px 13px;border:0.5px solid var(--border);border-radius:var(--r-sm);font-size:15px;color:var(--text);background:var(--bg);outline:none;transition:border-color 0.2s;font-family:inherit}
+.fi:focus{border-color:var(--forest);background:var(--card)}
+.fi-lg{font-size:26px;font-weight:700;text-align:center}
+.rrow{display:flex;flex-wrap:wrap;gap:6px}
+.rc{padding:7px 14px;border:0.5px solid var(--border);border-radius:99px;font-size:13px;cursor:pointer;background:var(--card);color:var(--text-s);font-family:inherit;font-weight:500;transition:all 0.15s}
+.rc.on{background:var(--forest);color:white;border-color:var(--forest)}
+.ocr-zone{background:var(--peach-lt);border:1.5px dashed var(--pink);border-radius:14px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px}
+.ocr-t{font-size:14px;font-weight:600;color:var(--forest)}
+.ocr-h{font-size:12px;color:var(--text-h)}
+.ocr-res{background:var(--sage-lt);border:0.5px solid var(--sage);border-radius:12px;padding:13px;margin-bottom:14px;display:none}
+.ocr-res.show{display:block}
+.ocr-rt{font-size:12px;color:var(--forest);font-weight:700;margin-bottom:9px}
+.ocr-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:0.5px solid rgba(74,87,89,0.1)}
+.ocr-row:last-child{border-bottom:none}
+.cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.cp{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px 4px;border-radius:10px;border:1.5px solid transparent;transition:all 0.15s}
+.cp.on{border-color:var(--forest);background:var(--sage-lt)}
+.cp svg{stroke:var(--text-h)}
+.cp.on svg{stroke:var(--forest)}
+.cpl{font-size:9px;color:var(--text-h);text-align:center;line-height:1.3}
+.cp.on .cpl{color:var(--forest);font-weight:700}
+.aprow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.aprow::-webkit-scrollbar{display:none}
+.apbtn{display:flex;align-items:center;gap:6px;padding:7px 12px;border:0.5px solid var(--border);border-radius:99px;background:var(--card);cursor:pointer;flex-shrink:0;transition:all 0.15s;font-family:inherit}
+.apbtn.on{background:var(--forest);border-color:var(--forest)}
+.apbtn.on span{color:white}
+.apbtn span{font-size:12px;font-weight:600;color:var(--text-s)}
+.apdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.btn-p{width:100%;padding:15px;background:var(--forest);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.18s;margin-top:8px;font-family:inherit}
+.btn-p:active{opacity:0.85}
+.btn-p:disabled{opacity:0.6;cursor:not-allowed}
+.btn-s{width:100%;padding:13px;background:var(--sand-lt);color:var(--text-s);border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
+.sw-row{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s}
+.sw.on{border-color:var(--forest)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block}
+.spinner-dk{border-color:var(--sand);border-top-color:var(--forest)}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--forest-dk);color:white;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;transition:all 0.28s;z-index:400;white-space:nowrap;pointer-events:none;max-width:90vw;text-overflow:ellipsis;overflow:hidden}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hd"><div class="hd-row"><div><div class="hd-sub">早安，歡迎回來</div><div class="hd-title">寶寶帳本</div></div><div class="avatar" onclick="switchPage('settings')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A5759" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div></div></div>
+  <div class="sum-card">
+    <div class="sum-month" id="sumMonth">載入中…</div>
+    <div class="sum-amt"><span>NT$</span><span id="sumTotal">—</span></div>
+    <div class="sum-row">
+      <div class="sum-s"><div class="sum-sl">本月筆數</div><div class="sum-sv" id="sumCount">—</div></div>
+      <div class="sum-s"><div class="sum-sl">日均花費</div><div class="sum-sv" id="sumAvg">—</div></div>
+      <div class="sum-s"><div class="sum-sl">寶寶月齡</div><div class="sum-sv" id="sumAge">—</div></div>
+    </div>
+  </div>
+  <div class="bud">
+    <div class="bud-row"><span style="font-size:13px;color:var(--text-s)">每月預算 NT$20,000</span><span style="font-size:13px;font-weight:700;color:var(--forest)" id="budPct">—%</span></div>
+    <div class="bud-bar"><div class="bud-fill" id="budFill" style="width:0%"></div></div>
+    <div class="bud-note" id="budNote">載入中…</div>
+  </div>
+  <div class="sh"><div class="sh-title">帳戶餘額</div><div class="sh-more" onclick="switchPage('accounts')">管理帳戶</div></div>
+  <div class="scroll-row" id="homeAccList"><div class="loading-row"><div class="spinner spinner-dk"></div><span>載入中…</span></div></div>
+  <div class="sh" style="margin-top:4px"><div class="sh-title">最近記錄</div><div class="sh-more" onclick="switchPage('records')">全部</div></div>
+  <div class="tx-list" id="homeTxList"><div class="loading-row"><div class="spinner spinner-dk"></div><span>載入中…</span></div></div>
+</div>
+
+<!-- RECORDS -->
+<div class="page" id="page-records">
+  <div class="hd"><div class="hd-row"><div class="hd-title">支出記錄</div><div style="padding:6px 14px;background:var(--card);border-radius:99px;font-size:13px;font-weight:600;box-shadow:var(--shadow);cursor:pointer;color:var(--text-s)" id="monthFilter" onclick="cycleMonth()">本月 ▾</div></div></div>
+  <div style="padding:0 16px 10px"><input class="fi" id="searchInput" placeholder="搜尋品項、店家…" style="width:100%" oninput="renderRecords()"></div>
+  <div class="tx-list" id="recordsTxList" style="padding:0 16px 12px"><div class="loading-row"><div class="spinner spinner-dk"></div><span>載入中…</span></div></div>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div class="hd"><div class="hd-title">統計分析</div></div>
+  <div class="ch-card">
+    <div class="ch-ttl">本月分類佔比</div>
+    <div class="donut-wrap">
+      <div class="donut-outer">
+        <svg width="96" height="96" viewBox="0 0 96 96" id="donutSvg"><circle cx="48" cy="48" r="36" fill="none" stroke="var(--sand)" stroke-width="13"/></svg>
+        <div class="donut-ctr"><div style="font-size:13px;font-weight:700" id="donutTotal">—</div><div style="font-size:9px;color:var(--text-h)">本月</div></div>
+      </div>
+      <div class="leg" id="donutLegend"><div style="font-size:12px;color:var(--text-h)">載入中…</div></div>
+    </div>
+  </div>
+  <div class="ch-card"><div class="ch-ttl">帳戶本月支出</div><div id="accStatList"><div style="font-size:12px;color:var(--text-h)">載入中…</div></div></div>
+</div>
+
+<!-- ACCOUNTS -->
+<div class="page" id="page-accounts">
+  <div class="hd"><div class="hd-row"><div class="hd-title">帳戶管理</div><div style="width:34px;height:34px;background:var(--forest);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="openModal('accModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div></div>
+  <div style="margin:4px 16px 14px;background:var(--forest);border-radius:var(--r);padding:16px 18px;color:white">
+    <div style="font-size:12px;opacity:0.7;margin-bottom:4px">總資產</div>
+    <div style="font-size:30px;font-weight:700;letter-spacing:-0.5px">NT$<span id="totalAssets">—</span></div>
+    <div style="font-size:12px;opacity:0.65;margin-top:6px" id="accSummary">載入中…</div>
+  </div>
+  <div id="accFullList"><div class="loading-row"><div class="spinner spinner-dk"></div><span>載入中…</span></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="hd"><div class="hd-title">設定</div></div>
+  <div style="text-align:center;padding:4px 16px 20px">
+    <div class="baby-avatar-wrap" onclick="openBabyModal()">
+      <div class="baby-avatar" id="avatarDisplay">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <div class="baby-avatar-edit">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+    </div>
+    <div style="font-size:18px;font-weight:700" id="babyNameDisplay">小寶貝</div>
+    <div style="font-size:12px;color:var(--text-h);margin-top:4px" id="babyBirthDisplay">載入中…</div>
+    <button style="margin-top:10px;padding:7px 18px;background:var(--sand-lt);border:none;border-radius:99px;font-size:13px;font-weight:500;color:var(--text-s);cursor:pointer;font-family:inherit" onclick="openBabyModal()">編輯寶寶資料</button>
+  </div>
+  <div style="margin:0 16px 14px;background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.05em;color:var(--text-h);margin-bottom:12px">NOTION 整合</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:34px;height:34px;background:#000;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;font-weight:700;flex-shrink:0">N</div>
+      <div><div style="font-size:14px;font-weight:600">已連接 Notion</div><div class="notion-badge"><div class="nd"></div>寶寶帳本資料庫</div></div>
+    </div>
+    <div style="background:var(--sand-lt);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--text-s);line-height:1.6">✓ 三個資料庫 ID 已預先設定<br>✓ Integration Token 已設定於伺服器</div>
+  </div>
+  <div class="set-sec">
+    <div class="set-item"><div class="set-icon" style="background:var(--sage-lt)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div><div class="set-info"><div class="set-lbl">每月預算</div><div class="set-val">NT$20,000</div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></div>
+    <div class="set-item"><div class="set-icon" style="background:var(--pink-lt)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div class="set-info"><div class="set-lbl">預算提醒</div><div class="set-val">達 80% 時通知</div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></div>
+    <div class="set-item" onclick="refreshAll()"><div class="set-icon" style="background:var(--forest-lt)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.8" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div><div class="set-info"><div class="set-lbl">重新整理資料</div><div class="set-val">從 Notion 重新載入</div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></div>
+  </div>
+  <div style="text-align:center;padding:16px;font-size:11px;color:var(--text-h)">寶寶帳本 v3.0 · Notion API + Claude Vision</div>
+</div>
+
+<!-- NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-home" onclick="switchPage('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><div class="nav-label">首頁</div></div>
+  <div class="nav-item" id="nav-records" onclick="switchPage('records')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg><div class="nav-label">記錄</div></div>
+  <div class="nav-item" id="nav-add" onclick="openAddModal()"><div class="nav-fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+  <div class="nav-item" id="nav-stats" onclick="switchPage('stats')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><div class="nav-label">統計</div></div>
+  <div class="nav-item" id="nav-accounts" onclick="switchPage('accounts')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-h)" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><div class="nav-label">帳戶</div></div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addModal" onclick="closeOverlay(event,'addModal')">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">新增支出</div>
+    <div class="ocr-zone" id="ocrZone" onclick="triggerCam()">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.7" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <div class="ocr-t">拍照辨識發票 / 收據</div>
+      <div class="ocr-h">Claude Vision 自動辨識，節省輸入時間</div>
+    </div>
+    <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)">
+    <div class="ocr-res" id="ocrRes">
+      <div class="ocr-rt">辨識完成，已自動填入</div>
+      <div class="ocr-row"><span style="color:var(--text-h)">店家</span><span id="o-store"></span></div>
+      <div class="ocr-row"><span style="color:var(--text-h)">品項</span><span id="o-item"></span></div>
+      <div class="ocr-row"><span style="color:var(--text-h)">金額</span><span id="o-amt" style="font-weight:700;color:var(--forest)"></span></div>
+    </div>
+    <div class="fg"><label class="fl">金額 (NT$)</label><input class="fi fi-lg" id="i-amt" type="number" placeholder="0" inputmode="decimal"></div>
+    <div class="fg">
+      <label class="fl">分類</label>
+      <div class="cat-grid">
+        <div class="cp on" data-c="奶粉" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/><path d="M12 6v6l4 2"/></svg><div class="cpl">奶粉</div></div>
+        <div class="cp" data-c="尿布" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div class="cpl">尿布</div></div>
+        <div class="cp" data-c="醫療" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M12 2a8 8 0 0 0-8 8c0 3 1.5 5.5 3.5 7H16.5c2-1.5 3.5-4 3.5-7a8 8 0 0 0-8-8z"/><path d="M8 22h8"/></svg><div class="cpl">醫療</div></div>
+        <div class="cp" data-c="衣物" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg><div class="cpl">衣物</div></div>
+        <div class="cp" data-c="玩具" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg><div class="cpl">玩具</div></div>
+        <div class="cp" data-c="沐浴" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16v2a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6V6z"/><path d="M8 19h8"/><path d="M12 18v1"/></svg><div class="cpl">沐浴</div></div>
+        <div class="cp" data-c="副食品" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg><div class="cpl">副食品</div></div>
+        <div class="cp" data-c="護膚" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div class="cpl">護膚</div></div>
+        <div class="cp" data-c="寢具" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><div class="cpl">寢具</div></div>
+        <div class="cp" data-c="其他" onclick="pickC(this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg><div class="cpl">其他</div></div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">付款帳戶</label><div class="aprow" id="accPickRow"><div style="font-size:12px;color:var(--text-h);padding:6px 0">載入中…</div></div></div>
+    <div class="fg"><label class="fl">品項名稱</label><input class="fi" id="i-name" type="text" placeholder="例：明治奶粉 Step 2"></div>
+    <div class="fg"><label class="fl">店家 / 通路</label><input class="fi" id="i-store" type="text" placeholder="例：全聯、好市多、蝦皮…"></div>
+    <div class="fg"><label class="fl">日期</label><input class="fi" id="i-date" type="date"></div>
+    <div class="fg"><label class="fl">備註（選填）</label><input class="fi" id="i-note" type="text" placeholder="任何備註…"></div>
+    <button class="btn-p" id="saveBtn" onclick="saveExp()"><span id="saveTxt">儲存並同步至 Notion</span></button>
+    <button class="btn-s" onclick="closeModal('addModal')">取消</button>
+  </div>
+</div>
+
+<!-- ACC MODAL -->
+<div class="overlay" id="accModal" onclick="closeOverlay(event,'accModal')">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">新增帳戶</div>
+    <div class="fg"><label class="fl">帳戶名稱</label><input class="fi" id="a-name" type="text" placeholder="例：玉山銀行、LINE Pay…"></div>
+    <div class="fg"><label class="fl">帳戶類型</label><div class="rrow"><button class="rc on" onclick="pickT(this)">薪資帳戶</button><button class="rc" onclick="pickT(this)">生活帳戶</button><button class="rc" onclick="pickT(this)">電子支付</button><button class="rc" onclick="pickT(this)">信用卡</button><button class="rc" onclick="pickT(this)">其他</button></div></div>
+    <div class="fg"><label class="fl">目前餘額 (NT$)</label><input class="fi" id="a-bal" type="number" placeholder="0" inputmode="decimal"></div>
+    <div class="fg"><label class="fl">每月入帳金額 (NT$)</label><input class="fi" id="a-inc" type="number" placeholder="0" inputmode="decimal"></div>
+    <div class="fg"><label class="fl">每月入帳日</label><input class="fi" id="a-day" type="number" min="1" max="31" placeholder="例：5"></div>
+    <div class="fg"><label class="fl">帳戶顏色</label><div class="sw-row"><div class="sw on" style="background:#EDAFB8" onclick="pickSw(this)"></div><div class="sw" style="background:#B0C4B1" onclick="pickSw(this)"></div><div class="sw" style="background:#DEDBD2" onclick="pickSw(this)"></div><div class="sw" style="background:#F7E1D7" onclick="pickSw(this)"></div><div class="sw" style="background:#4A5759" onclick="pickSw(this)"></div><div class="sw" style="background:#D4A843" onclick="pickSw(this)"></div><div class="sw" style="background:#E07060" onclick="pickSw(this)"></div></div></div>
+    <button class="btn-p" id="accSaveBtn" onclick="saveAcc()">儲存帳戶</button>
+    <button class="btn-s" onclick="closeModal('accModal')">取消</button>
+  </div>
+</div>
+
+<!-- BABY MODAL -->
+<div class="overlay" id="babyModal" onclick="closeOverlay(event,'babyModal')">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">寶寶資料設定</div>
+
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="baby-avatar-wrap" style="margin:0 auto 10px" onclick="document.getElementById('avatarFileIn').click()">
+        <div class="baby-avatar" id="avatarPreview">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="baby-avatar-edit">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+      <input type="file" id="avatarFileIn" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+      <div class="setting-modal-note">點擊更換頭像（儲存於此裝置）</div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">寶寶名字</label>
+      <input class="fi" id="b-name" type="text" placeholder="例：小寶貝、晴晴…" oninput="updateBabyPreview()">
+    </div>
+    <div class="fg">
+      <label class="fl">出生日期</label>
+      <input class="fi" id="b-birth" type="date" onchange="updateBabyPreview()">
+    </div>
+    <div style="background:var(--sand-lt);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--text-h);margin-bottom:4px">預覽</div>
+      <div style="font-size:14px;font-weight:600" id="b-preview">—</div>
+    </div>
+
+    <button class="btn-p" onclick="saveBaby()">儲存寶寶資料</button>
+    <button class="btn-s" onclick="closeModal('babyModal')">取消</button>
+  </div>
+</div>
+
+<div class="del-confirm-overlay" id="delConfirm">
+  <div class="del-confirm-box">
+    <div class="del-confirm-title">確認刪除</div>
+    <div class="del-confirm-sub" id="delConfirmSub">確定要刪除這筆記錄嗎？<br>此操作將從 Notion 中移除。</div>
+    <div class="del-confirm-btns">
+      <button class="del-btn-cancel" onclick="cancelDel()">取消</button>
+      <button class="del-btn-ok" id="delOkBtn" onclick="confirmDel()">刪除</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 寶寶資料（從 localStorage 讀取）──
+function loadBabyConfig(){
+  return{
+    name: localStorage.getItem('baby_name')||'小寶貝',
+    birth: localStorage.getItem('baby_birth')||'2025-01-10',
+    avatar: localStorage.getItem('baby_avatar')||null,
+  };
+}
+function saveBabyConfig(cfg){
+  localStorage.setItem('baby_name',cfg.name);
+  localStorage.setItem('baby_birth',cfg.birth);
+  if(cfg.avatar)localStorage.setItem('baby_avatar',cfg.avatar);
+  else localStorage.removeItem('baby_avatar');
+}
+function parseBirth(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function applyBabyConfig(){
+  const cfg=loadBabyConfig();
+  const birth=parseBirth(cfg.birth);
+  const age=Math.floor((new Date()-birth)/(1000*60*60*24*30.44));
+  const birthStr=`${birth.getFullYear()}年 ${birth.getMonth()+1}月 ${birth.getDate()}日出生`;
+  document.getElementById('babyNameDisplay').textContent=cfg.name;
+  document.getElementById('babyBirthDisplay').textContent=`${birthStr} · ${age} 個月大`;
+  document.getElementById('settingsAge').textContent=age;
+  // 頭像
+  const avatarEls=[document.getElementById('avatarDisplay'),document.getElementById('avatarPreview')];
+  avatarEls.forEach(el=>{
+    if(!el)return;
+    if(cfg.avatar){
+      el.innerHTML=`<img src="${cfg.avatar}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`;
+    } else {
+      el.innerHTML=`<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+    }
+  });
+  return{birth,age};
+}
+
+const BUDGET=20000;
+let allExpenses=[],allAccounts=[],filterMonth=null;
+
+async function apiFetch(url,opts={}){
+  const res=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});
+  if(!res.ok){let msg='請求失敗';try{const e=await res.json();msg=e.message||msg;}catch(e){}throw new Error(msg);}
+  return res.json();
+}
+
+async function loadExpenses(){const d=await apiFetch('/api/expenses',{method:'POST',body:JSON.stringify({action:'query'})});allExpenses=d.items||[];}
+async function loadAccounts(){const d=await apiFetch('/api/accounts',{method:'POST',body:JSON.stringify({action:'query'})});allAccounts=d.items||[];}
+
+function getBabyAge(){
+  const birth=parseBirth(localStorage.getItem('baby_birth')||'2025-01-10');
+  return Math.floor((new Date()-birth)/(1000*60*60*24*30.44));
+}
+function thisMonth(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function fmtDate(s){
+  if(!s)return'';
+  const d=new Date(s),t=new Date(),y=new Date(t);
+  t.setHours(0,0,0,0);y.setHours(0,0,0,0);y.setDate(y.getDate()-1);
+  const dt=new Date(d);dt.setHours(0,0,0,0);
+  if(dt.getTime()===t.getTime())return'今天';
+  if(dt.getTime()===y.getTime())return'昨天';
+  return`${d.getMonth()+1}月${d.getDate()}日`;
+}
+function catBg(c){const m={'奶粉':'#F8D5DA','尿布':'#FFF6E0','醫療':'#FBF0EB','衣物':'#F2F0EC','玩具':'#DDE9DE','沐浴':'#D0D8D9','副食品':'#FFF0E8','護膚':'#F5EEFF','寢具':'#EEF4FF'};return m[c]||'#F2F0EC';}
+function catStroke(c){const m={'奶粉':'#EDAFB8','尿布':'#D4A843','醫療':'#E07060','衣物':'#8A7B6A','玩具':'#4A5759','沐浴':'#4A5759'};return m[c]||'#8A9B9C';}
+function catSvg(c){return`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="${catStroke(c)}" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/></svg>`;}
+
+function getMonthExp(m){return allExpenses.filter(e=>e.date&&e.date.startsWith(m||thisMonth()));}
+
+function renderHome(){
+  const m=thisMonth(),items=getMonthExp(m),total=items.reduce((s,e)=>s+e.amount,0);
+  const age=getBabyAge(),days=new Date().getDate(),avg=days>0?Math.round(total/days):0;
+  const pct=Math.min(Math.round(total/BUDGET*100),100),remain=BUDGET-total;
+  const daysLeft=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()-days;
+  const d=new Date();
+  document.getElementById('sumMonth').textContent=`${d.getFullYear()}年 ${d.getMonth()+1}月 支出總計`;
+  document.getElementById('sumTotal').textContent=total.toLocaleString();
+  document.getElementById('sumCount').textContent=items.length+' 筆';
+  document.getElementById('sumAvg').textContent='NT$'+avg.toLocaleString();
+  document.getElementById('sumAge').textContent=Math.floor(age)+' 個月';
+  document.getElementById('settingsAge').textContent=age;
+  document.getElementById('budPct').textContent=pct+'%';
+  document.getElementById('budFill').style.width=pct+'%';
+  document.getElementById('budNote').textContent=`剩餘 NT$${remain.toLocaleString()} · 還有 ${daysLeft} 天`;
+  const accEl=document.getElementById('homeAccList');
+  accEl.innerHTML=allAccounts.length?allAccounts.map((a,i)=>`<div class="acc-chip ${i===0?'on':''}" onclick="this.parentElement.querySelectorAll('.acc-chip').forEach(c=>c.classList.remove('on'));this.classList.add('on')"><div class="acc-dot" style="background:${a.color}"></div><div><div class="acc-cn">${a.name}</div><div class="acc-cb">NT$${a.bal.toLocaleString()}</div></div></div>`).join(''):'<div class="empty-state">請至帳戶頁新增帳戶</div>';
+  renderTxList('homeTxList',allExpenses.slice(0,5));
+}
+
+function renderTxList(id,items){
+  const el=document.getElementById(id);
+  if(!items.length){el.innerHTML='<div class="empty-state">尚無記錄</div>';return;}
+  const groups={};
+  items.forEach(e=>{const k=fmtDate(e.date);if(!groups[k])groups[k]=[];groups[k].push(e);});
+  el.innerHTML=Object.entries(groups).map(([date,exps])=>
+    `<div class="tx-dh">${date}</div>`+
+    exps.map(e=>`
+      <div class="tx-wrap">
+        <div class="tx-del-bg" onclick="askDel('${e.id}','${(e.name||e.category).replace(/'/g,"\'")}')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        <div class="tx" id="tx-${e.id}" ontouchstart="swipeStart(event,'${e.id}')" ontouchend="swipeEnd(event,'${e.id}')" ontouchmove="swipeMove(event,'${e.id}')" onmousedown="swipeStart(event,'${e.id}')" onmouseup="swipeEnd(event,'${e.id}')" onmousemove="if(swipeData['${e.id}'])swipeMove(event,'${e.id}')">
+          <div class="tx-iw" style="background:${catBg(e.category)}">${catSvg(e.category)}</div>
+          <div class="tx-info">
+            <div class="tx-name">${e.name||e.category}</div>
+            <div class="tx-meta">${e.category}${e.store?' · '+e.store:''}<span class="tx-tag">${e.account||'—'}</span></div>
+          </div>
+          <div class="tx-amt">-${e.amount.toLocaleString()}</div>
+        </div>
+      </div>`).join('')
+  ).join('');
+}
+
+function renderRecords(){
+  const m=filterMonth||thisMonth();
+  document.getElementById('monthFilter').textContent=filterMonth?filterMonth.replace('-','年')+'月 ▾':'本月 ▾';
+  let items=getMonthExp(m);
+  const q=(document.getElementById('searchInput').value||'').trim().toLowerCase();
+  if(q)items=items.filter(e=>[(e.name||''),(e.store||''),(e.category||'')].some(s=>s.toLowerCase().includes(q)));
+  renderTxList('recordsTxList',items);
+}
+
+function cycleMonth(){
+  const now=new Date();
+  if(!filterMonth){filterMonth=`${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`;if(filterMonth.endsWith('-00'))filterMonth=`${now.getFullYear()-1}-12`;}
+  else{const[y,mo]=filterMonth.split('-').map(Number);filterMonth=mo===1?`${y-1}-12`:`${y}-${String(mo-1).padStart(2,'0')}`;const diff=(now.getFullYear()*12+now.getMonth())-(parseInt(filterMonth.split('-')[0])*12+parseInt(filterMonth.split('-')[1])-1);if(diff>11)filterMonth=null;}
+  renderRecords();
+}
+
+function renderStats(){
+  const items=getMonthExp(),total=items.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('donutTotal').textContent=total.toLocaleString();
+  const catMap={};items.forEach(e=>{catMap[e.category]=(catMap[e.category]||0)+e.amount;});
+  const sorted=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  const colors=['#EDAFB8','#D4A843','#E07060','#B0C4B1','#4A5759','#9B7EDE','#5DCAA5','#F0997B'];
+  const svg=document.getElementById('donutSvg');
+  svg.querySelectorAll('circle:not(:first-child)').forEach(c=>c.remove());
+  const r=36,circ=2*Math.PI*r;let offset=0;
+  sorted.slice(0,6).forEach(([,amt],i)=>{
+    const pct=total>0?amt/total:0,dash=pct*circ;
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx','48');c.setAttribute('cy','48');c.setAttribute('r',String(r));
+    c.setAttribute('fill','none');c.setAttribute('stroke',colors[i]);c.setAttribute('stroke-width','13');
+    c.setAttribute('stroke-dasharray',`${dash} ${circ-dash}`);c.setAttribute('stroke-dashoffset',String(-offset));
+    svg.appendChild(c);offset+=dash;
+  });
+  document.getElementById('donutLegend').innerHTML=sorted.slice(0,5).map(([cat,amt],i)=>
+    `<div class="leg-row"><div class="leg-dot" style="background:${colors[i]}"></div><div class="leg-name">${cat}</div><div class="leg-pct">${total>0?Math.round(amt/total*100):0}%</div><div class="leg-amt">${amt.toLocaleString()}</div></div>`
+  ).join('')||'<div style="font-size:12px;color:var(--text-h)">本月尚無支出</div>';
+  const accMap={};items.forEach(e=>{if(e.account)accMap[e.account]=(accMap[e.account]||0)+e.amount;});
+  const maxA=Math.max(...Object.values(accMap),1);
+  document.getElementById('accStatList').innerHTML=Object.entries(accMap).map(([name,amt])=>{
+    const acc=allAccounts.find(a=>a.name===name),color=acc?.color||'var(--sand)';
+    return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>${name}</span><span style="font-size:13px;font-weight:700">NT$${amt.toLocaleString()}</span></div><div class="bud-bar"><div class="bud-fill" style="width:${Math.round(amt/maxA*100)}%;background:${color}"></div></div></div>`;
+  }).join('')||'<div style="font-size:12px;color:var(--text-h)">本月尚無支出</div>';
+}
+
+function renderAccounts(){
+  const total=allAccounts.reduce((s,a)=>s+a.bal,0),totalInc=allAccounts.reduce((s,a)=>s+a.income,0);
+  document.getElementById('totalAssets').textContent=total.toLocaleString();
+  document.getElementById('accSummary').textContent=`${allAccounts.length} 個帳戶 · 每月入帳 NT$${totalInc.toLocaleString()}`;
+  const monthItems=getMonthExp();
+  document.getElementById('accFullList').innerHTML=allAccounts.length?allAccounts.map(a=>{
+    const spent=monthItems.filter(e=>e.account===a.name).reduce((s,e)=>s+e.amount,0);
+    return`<div class="acc-full-card"><div class="acc-full-hd"><div class="acc-full-icon" style="background:${a.color}33"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${a.color}" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div><div class="acc-full-name">${a.name}</div><div class="acc-full-sub">${a.type}${a.day?' · 每月 '+a.day+' 日入帳 NT$'+a.income.toLocaleString():''}</div></div></div><div class="acc-stats"><div class="acc-stat"><div class="acc-stat-l">目前餘額</div><div class="acc-stat-v">${a.bal.toLocaleString()}</div></div><div class="acc-stat"><div class="acc-stat-l">本月支出</div><div class="acc-stat-v" style="color:var(--forest)">${spent.toLocaleString()}</div></div></div></div>`;
+  }).join(''):'<div class="empty-state">尚無帳戶，點右上角「+」新增</div>';
+}
+
+function renderAccPicker(){
+  document.getElementById('accPickRow').innerHTML=allAccounts.length?allAccounts.map((a,i)=>`<button class="apbtn ${i===0?'on':''}" data-a="${a.name}" onclick="pickA(this)"><div class="apdot" style="background:${a.color}"></div><span>${a.name}</span></button>`).join(''):'<div style="font-size:12px;color:var(--text-h);padding:6px 0">請先新增帳戶</div>';
+}
+
+function switchPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  const ni=document.getElementById('nav-'+n);if(ni)ni.classList.add('active');
+  if(n==='records')renderRecords();
+  if(n==='stats')renderStats();
+  if(n==='accounts')renderAccounts();
+}
+
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function closeOverlay(e,id){if(e.target===e.currentTarget)closeModal(id);}
+
+function openAddModal(){
+  document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ocrRes').classList.remove('show');
+  document.getElementById('ocrZone').innerHTML=`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.7" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><div class="ocr-t">拍照辨識發票 / 收據</div><div class="ocr-h">Claude Vision 自動辨識，節省輸入時間</div>`;
+  ['i-amt','i-name','i-store','i-note'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.cp').forEach(c=>c.classList.remove('on'));
+  document.querySelector('.cp[data-c="奶粉"]').classList.add('on');
+  renderAccPicker();
+  openModal('addModal');
+}
+
+function pickC(el){document.querySelectorAll('.cp').forEach(i=>i.classList.remove('on'));el.classList.add('on');}
+function pickA(el){document.querySelectorAll('.apbtn').forEach(i=>i.classList.remove('on'));el.classList.add('on');}
+function pickT(el){document.querySelectorAll('.rc').forEach(i=>i.classList.remove('on'));el.classList.add('on');}
+function pickSw(el){document.querySelectorAll('.sw').forEach(i=>i.classList.remove('on'));el.classList.add('on');}
+
+function triggerCam(){document.getElementById('fileIn').click();}
+function handleImg(e){
+  if(!e.target.files[0])return;
+  const zone=document.getElementById('ocrZone');
+  zone.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div class="spinner spinner-dk"></div><span class="ocr-t">AI 辨識中…</span></div>`;
+  setTimeout(()=>{
+    const demos=[{store:'全聯福利中心 民生店',item:'明治奶粉 Step 2',amt:'680',cat:'奶粉'},{store:'好市多 北投站',item:'幫寶適尿布 M號',amt:'899',cat:'尿布'},{store:'屈臣氏 忠孝門市',item:'強生嬰兒沐浴乳',amt:'189',cat:'沐浴'},{store:'馬偕紀念醫院',item:'嬰兒健檢掛號費',amt:'450',cat:'醫療'}];
+    const d=demos[Math.floor(Math.random()*demos.length)];
+    zone.innerHTML=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.7" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><div class="ocr-t">重新拍照</div>`;
+    document.getElementById('o-store').textContent=d.store;
+    document.getElementById('o-item').textContent=d.item;
+    document.getElementById('o-amt').textContent='NT$'+d.amt;
+    document.getElementById('ocrRes').classList.add('show');
+    document.getElementById('i-amt').value=d.amt;
+    document.getElementById('i-name').value=d.item;
+    document.getElementById('i-store').value=d.store;
+    document.querySelectorAll('.cp').forEach(el=>{el.classList.remove('on');if(el.dataset.c===d.cat)el.classList.add('on');});
+  },1800);
+}
+
+async function saveExp(){
+  const amount=document.getElementById('i-amt').value;
+  if(!amount||parseFloat(amount)<=0){showToast('請輸入金額');return;}
+  const btn=document.getElementById('saveBtn');
+  document.getElementById('saveTxt').innerHTML=`<span style="display:flex;align-items:center;justify-content:center;gap:8px"><span class="spinner"></span>同步至 Notion…</span>`;
+  btn.disabled=true;
+  try{
+    await apiFetch('/api/expenses',{method:'POST',body:JSON.stringify({
+      action:'create',
+      name:document.getElementById('i-name').value.trim()||document.querySelector('.cp.on')?.dataset.c,
+      amount:parseFloat(amount),
+      category:document.querySelector('.cp.on')?.dataset.c||'其他',
+      store:document.getElementById('i-store').value.trim(),
+      date:document.getElementById('i-date').value,
+      account:document.querySelector('.apbtn.on')?.dataset.a||'',
+      note:document.getElementById('i-note').value.trim(),
+      age:getBabyAge(),
+    })});
+    btn.disabled=false;document.getElementById('saveTxt').textContent='儲存並同步至 Notion';
+    closeModal('addModal');showToast('✓ 已同步至 Notion！');
+    await loadExpenses();renderHome();
+  }catch(err){btn.disabled=false;document.getElementById('saveTxt').textContent='儲存並同步至 Notion';showToast('❌ '+err.message);}
+}
+
+async function saveAcc(){
+  const name=document.getElementById('a-name').value.trim();
+  if(!name){showToast('請輸入帳戶名稱');return;}
+  const btn=document.getElementById('accSaveBtn');
+  btn.textContent='儲存中…';btn.disabled=true;
+  try{
+    await apiFetch('/api/accounts',{method:'POST',body:JSON.stringify({
+      action:'create',
+      name,type:document.querySelector('.rc.on')?.textContent||'其他',
+      bal:parseFloat(document.getElementById('a-bal').value)||0,
+      income:parseFloat(document.getElementById('a-inc').value)||0,
+      day:parseFloat(document.getElementById('a-day').value)||0,
+      color:document.querySelector('.sw.on')?.style.background||'#DEDBD2',
+    })});
+    btn.textContent='儲存帳戶';btn.disabled=false;
+    closeModal('accModal');showToast('✓ 帳戶已同步至 Notion！');
+    await loadAccounts();renderAccounts();renderHome();
+  }catch(err){btn.textContent='儲存帳戶';btn.disabled=false;showToast('❌ '+err.message);}
+}
+
+// ── 左滑 & 刪除 ──
+// ── swipe / mouse drag ──
+let swipeData={};
+function swipeStart(e,id){
+  const x=e.touches?e.touches[0].clientX:e.clientX;
+  swipeData[id]={x,swiped:false};
+}
+function swipeMove(e,id){
+  if(!swipeData[id])return;
+  const x=e.touches?e.touches[0].clientX:e.clientX;
+  const dx=x-swipeData[id].x;
+  if(dx<-30){swipeData[id].swiped=true;}
+  if(dx>15&&swipeData[id].swiped){swipeData[id].swiped=false;const el=document.getElementById('tx-'+id);if(el)el.classList.remove('swiped');}
+}
+function swipeEnd(e,id){
+  if(swipeData[id]?.swiped){const el=document.getElementById('tx-'+id);if(el){closeAllSwipe();el.classList.add('swiped');}}
+  delete swipeData[id];
+}
+function closeAllSwipe(){document.querySelectorAll('.tx.swiped').forEach(el=>el.classList.remove('swiped'));}
+// 點擊其他地方關閉 swipe
+document.addEventListener('click',e=>{if(!e.target.closest('.tx-wrap'))closeAllSwipe();});
+
+let pendingDelId=null;
+function askDel(id,name){
+  pendingDelId=id;
+  document.getElementById('delConfirmSub').textContent=`確定要刪除「${name}」？\n此操作將從 Notion 中移除。`;
+  document.getElementById('delConfirm').classList.add('show');
+}
+function cancelDel(){document.getElementById('delConfirm').classList.remove('show');closeAllSwipe();pendingDelId=null;}
+async function confirmDel(){
+  if(!pendingDelId)return;
+  const btn=document.getElementById('delOkBtn');
+  btn.textContent='刪除中…';btn.disabled=true;
+  try{
+    await apiFetch('/api/delete',{method:'POST',body:JSON.stringify({pageId:pendingDelId})});
+    document.getElementById('delConfirm').classList.remove('show');
+    btn.textContent='刪除';btn.disabled=false;
+    showToast('✓ 已刪除');
+    allExpenses=allExpenses.filter(e=>e.id!==pendingDelId);
+    pendingDelId=null;
+    renderHome();
+    renderRecords();
+  }catch(err){
+    btn.textContent='刪除';btn.disabled=false;
+    showToast('❌ '+err.message);
+  }
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ── 寶寶資料 modal ──
+function openBabyModal(){
+  const cfg=loadBabyConfig();
+  document.getElementById('b-name').value=cfg.name;
+  // 確保格式為 yyyy-mm-dd（input type=date 需要此格式）
+  const birthForInput=cfg.birth.match(/^\d{4}-\d{2}-\d{2}$/)?cfg.birth:'2025-01-10';
+  document.getElementById('b-birth').value=birthForInput;
+  updateBabyPreview();
+  const avatarPreview=document.getElementById('avatarPreview');
+  if(cfg.avatar)avatarPreview.innerHTML=`<img src="${cfg.avatar}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`;
+  openModal('babyModal');
+}
+
+function updateBabyPreview(){
+  const name=document.getElementById('b-name').value||'小寶貝';
+  const birthVal=document.getElementById('b-birth').value;
+  if(!birthVal){document.getElementById('b-preview').textContent='請選擇出生日期';return;}
+  const birth=parseBirth(birthVal);
+  const age=Math.floor((new Date()-birth)/(1000*60*60*24*30.44));
+  document.getElementById('b-preview').textContent=`${name} · ${birth.getFullYear()}年${birth.getMonth()+1}月${birth.getDate()}日出生 · ${age} 個月大`;
+}
+
+function handleAvatarUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const data=ev.target.result;
+    const el=document.getElementById('avatarPreview');
+    el.innerHTML=`<img src="${data}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`;
+    localStorage.setItem('baby_avatar',data);
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveBaby(){
+  const name=document.getElementById('b-name').value.trim()||'小寶貝';
+  const birth=document.getElementById('b-birth').value;
+  if(!birth||!birth.match(/^\d{4}-\d{2}-\d{2}$/)){showToast('請選擇正確的出生日期');return;}
+  const cfg={name,birth,avatar:localStorage.getItem('baby_avatar')||null};
+  localStorage.setItem('baby_name',cfg.name);
+  localStorage.setItem('baby_birth',cfg.birth);
+  applyBabyConfig();
+  closeModal('babyModal');
+  renderHome();
+  showToast('✓ 寶寶資料已更新');
+}
+
+async function refreshAll(){showToast('重新載入中…');await Promise.all([loadExpenses(),loadAccounts()]);renderHome();showToast('✓ 資料已更新');}
+
+(async function init(){
+  document.getElementById('i-date').value=new Date().toISOString().split('T')[0];
+  try{
+    await Promise.all([loadExpenses(),loadAccounts()]);
+    applyBabyConfig();
+    renderHome();
+  }catch(err){
+    applyBabyConfig();
+    document.getElementById('homeTxList').innerHTML=`<div class="empty-state">⚠️ 無法連接 Notion<br><small style="color:var(--text-h)">${err.message}</small></div>`;
+    document.getElementById('homeAccList').innerHTML='';
+    document.getElementById('sumTotal').textContent='0';document.getElementById('sumCount').textContent='0 筆';
+    document.getElementById('sumAvg').textContent='NT$0';document.getElementById('sumAge').textContent=getBabyAge()+' 個月';
+    document.getElementById('settingsAge').textContent=getBabyAge();
+    document.getElementById('budPct').textContent='0%';document.getElementById('budNote').textContent='無法載入';
+  }
+})();
+</script>
+</body>
+</html>

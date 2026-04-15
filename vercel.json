@@ -1,7 +1,1 @@
-{
-  "version": 2,
-  "functions": {
-    "api/notion.js": { "runtime": "nodejs20.x" },
-    "api/verify.js": { "runtime": "nodejs20.x" }
-  }
-}
+{}
